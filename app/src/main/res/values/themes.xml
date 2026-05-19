@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.PiChat" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">#7C5CFC</item>
+        <item name="colorPrimaryVariant">#5E43C4</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="android:statusBarColor">#1B1F20</item>
+        <item name="android:navigationBarColor">#1B1F20</item>
+        <item name="android:windowBackground">#1B1F20</item>
+    </style>
+</resources>

@@ -1,0 +1,8 @@
+/build/
+app/build/
+.idea/
+*.iml
+.gradle/
+.DS_Store
+node_modules/
+pi-dev-chat.apk
