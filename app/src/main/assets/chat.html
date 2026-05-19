@@ -617,6 +617,7 @@ function sendMessage(t){
   busy=true;
   if(!$aiMsg||$aiMsg.classList.contains('cleared')){addDateDiv()}
   addUserMsg(t);showStop();showTyping();
+  console.log('[sendMessage]',t);
   ChatBridge.onSend(t);
 }
 
@@ -808,16 +809,18 @@ window.onMessage=function(raw){
 
 /* JS→Java bridge — save Java ref before overwriting */
 var _java = window.ChatBridge;
+console.log('[bridge]', _java ? 'Java ChatBridge found' : 'Java ChatBridge MISSING');
 window.ChatBridge={
-  onSend:function(msg){_java.send(msg)},
-  onCancel:function(){_java.cancel()},
-  onNewChat:function(){_java.newChat()},
-  openConfig:function(){_java.openConfig()},
-  openURL:function(url){_java.openURL(url)}
+  onSend:function(msg){
+    console.log('[send]', msg.slice(0,80));
+    try{_java.send(msg);console.log('[send] OK')}catch(e){console.error('[send] FAIL',e)}
+  },
+  onCancel:function(){try{_java.cancel()}catch(e){console.error('[cancel] FAIL',e)}},
+  onNewChat:function(){try{_java.newChat()}catch(e){console.error('[newChat] FAIL',e)}},
+  openConfig:function(){try{_java.openConfig()}catch(e){console.error('[openConfig] FAIL',e)}},
+  openURL:function(url){try{_java.openURL(url)}catch(e){console.error('[openURL] FAIL',e)}
+  }
 };
-
-/* Auto-resize input on load */
-autoH();
 
 /* Auto-resize input on load */
 autoH();
