@@ -79,7 +79,15 @@ wsl --shutdown
 hostname -I   # should show 192.168.1.190 (your Windows WiFi IP)
 ```
 
-4. Run the proxy inside WSL:
+4. **Allow inbound connections through Windows Firewall** (required!):
+```powershell
+# Run in Windows PowerShell as Administrator:
+New-NetFirewallRule -DisplayName "WSL2-Port8765" -Direction Inbound -Protocol TCP -LocalPort 8765 -Action Allow
+```
+
+> ⚠️ Without this, Windows Firewall blocks inbound traffic to WSL2 even with mirrored networking, causing `ETIMEDOUT` on your phone.
+
+5. Run the proxy inside WSL:
 ```bash
 cd /path/to/pi-dev-app
 npm install ws
@@ -107,6 +115,7 @@ Run the proxy inside WSL, then enter **that WSL IP** in the phone app config.
 | Error | Cause | Fix |
 |-------|-------|-----|
 | `spawn pi ENOENT` | Running proxy in Windows CMD instead of WSL | Run `node pi-rpc-proxy.js` **inside WSL** |
+| `ETIMEDOUT` / can't connect (WSL) | Windows Firewall blocking inbound TCP to WSL2 | Add firewall rule (step 4 above) |
 | `ETIMEDOUT` / can't connect | Phone using `192.168.1.190` but proxy is on WSL VM IP | Use mirrored networking (Fix A) or enter WSL IP (Fix B) |
 | `EADDRNOTAVAIL` | Binding to wrong interface | Ensure `--host 0.0.0.0` in proxy |
 
