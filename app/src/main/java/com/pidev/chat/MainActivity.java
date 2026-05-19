@@ -3,8 +3,8 @@ package com.pidev.chat;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.Network;
-import android.net.NetworkCallback;
 import android.net.NetworkRequest;
+import android.net.NetworkCapabilities;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -31,16 +31,17 @@ public class MainActivity extends AppCompatActivity {
     private WebSocketClient ws;
     private static final String TAG = "PiChat";
 
-    private Handler mainHandler = new Handler(Looper.getMainHandler());
+    private Handler mainHandler;
     private int reconnectDelay = 2000;
     private Runnable reconnectRunnable;
-    private NetworkCallback networkCallback;
-    private boolean isForeground = true;
+    private ConnectivityManager.NetworkCallback networkCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mainHandler = new Handler(Looper.getMainLooper());
 
         webView = findViewById(R.id.webView);
         statusText = findViewById(R.id.statusText);
@@ -172,9 +173,12 @@ public class MainActivity extends AppCompatActivity {
     private boolean isNetworkAvailable() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         if (cm != null) {
-            Network network = cm.getActiveNetwork();
-            if (network != null) {
-                return true;
+            if (Build.VERSION.SDK_INT >= 23) {
+                Network network = cm.getActiveNetwork();
+                if (network != null) return true;
+            } else {
+                // @SuppressWarnings("deprecation")
+                if (cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isConnected()) return true;
             }
         }
         return false;
@@ -184,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= 21) {
             ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
             if (cm != null) {
-                networkCallback = new NetworkCallback() {
+                networkCallback = new ConnectivityManager.NetworkCallback() {
                     @Override
                     public void onAvailable(@NonNull Network network) {
                         Log.d(TAG, "Network available");
@@ -210,7 +214,7 @@ public class MainActivity extends AppCompatActivity {
                 };
 
                 NetworkRequest request = new NetworkRequest.Builder()
-                        .addCapability(NetworkRequest.NET_CAPABILITY_INTERNET)
+                        .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                         .build();
                 cm.registerNetworkCallback(request, networkCallback);
             }
@@ -218,15 +222,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        isForeground = false;
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
-        isForeground = true;
         // If disconnected while in background, reconnect immediately
         if (ws != null && !ws.isOpen() && isNetworkAvailable()) {
             setStatus("◌ Reconnecting...", "#FFA726");
@@ -251,8 +248,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // Don't close the WebSocket unless we're truly finishing
-        // This keeps the session alive when switching apps
+        // Don't close WebSocket unless truly finishing
+        // Keeps session alive when switching apps
         if (isFinishing()) {
             if (ws != null && ws.isOpen()) {
                 ws.close();

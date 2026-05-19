@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.widget.Switch;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.button.MaterialButton;
@@ -18,7 +17,6 @@ public class ConfigActivity extends AppCompatActivity {
         TextInputEditText ipInput = findViewById(R.id.ipInput);
         TextInputEditText portInput = findViewById(R.id.portInput);
         MaterialButton startBtn = findViewById(R.id.startBtn);
-        Switch keepAliveSwitch = findViewById(R.id.keepAliveSwitch);
 
         // If already configured, show current values but still allow editing
         ipInput.setText(AppSettings.getServerIp(this));
@@ -51,7 +49,6 @@ public class ConfigActivity extends AppCompatActivity {
             AppSettings.setConfigured(this, true);
 
             if (isReconfigure) {
-                // Return to MainActivity which will auto-reconnect
                 setResult(RESULT_OK);
                 finish();
             } else {
