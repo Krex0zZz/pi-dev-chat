@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#1B1F20">
+    android:background="#0D110F">
 
     <WebView
         android:id="@+id/webView"
@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:background="#1B1F20"
+        android:background="#0D110F"
         android:minHeight="36dp">
 
         <TextView
@@ -28,7 +28,7 @@
             android:gravity="center"
             android:padding="4dp"
             android:textSize="11sp"
-            android:textColor="#FFA726" />
+            android:textColor="#7BC894" />
 
         <ImageButton
             android:id="@+id/reconnectBtn"
@@ -39,7 +39,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Reconnect"
             android:src="@android:drawable/ic_menu_rotate"
-            app:tint="#FFA726"
+            app:tint="#7BC894"
             android:visibility="gone" />
 
     </LinearLayout>

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1B1F20"
+    android:background="#0D110F"
     android:fillViewport="true">
 
     <LinearLayout
@@ -34,7 +34,7 @@
             android:text="pi.dev Chat"
             android:textSize="26sp"
             android:textStyle="bold"
-            android:textColor="#7C5CFC"
+            android:textColor="#7BC894"
             android:layout_marginBottom="4dp" />
 
         <TextView
@@ -42,7 +42,7 @@
             android:layout_height="wrap_content"
             android:text="Connect to your PC running\npi-rpc-proxy"
             android:textSize="13sp"
-            android:textColor="#9AA0A6"
+            android:textColor="#A6B5A8"
             android:gravity="center"
             android:layout_marginBottom="24dp" />
 
@@ -50,10 +50,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="PC IP Address"
-            app:boxBackgroundColor="#2F3539"
-            app:hintTextColor="#7C5CFC"
-            app:boxStrokeColor="#363B3F"
-            android:textColorHint="#9AA0A6"
+            app:boxBackgroundColor="#161B17"
+            app:hintTextColor="#7BC894"
+            app:boxStrokeColor="#3D4540"
+            android:textColorHint="#6E7B70"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -61,7 +61,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="text"
-                android:textColor="#E8EAED"
+                android:textColor="#E0E8DD"
                 android:textSize="14sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -70,10 +70,10 @@
             android:layout_height="wrap_content"
             android:hint="Proxy Port (default 8765)"
             android:layout_marginTop="12dp"
-            app:boxBackgroundColor="#2F3539"
-            app:hintTextColor="#7C5CFC"
-            app:boxStrokeColor="#363B3F"
-            android:textColorHint="#9AA0A6"
+            app:boxBackgroundColor="#161B17"
+            app:hintTextColor="#7BC894"
+            app:boxStrokeColor="#3D4540"
+            android:textColorHint="#6E7B70"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -81,7 +81,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number"
-                android:textColor="#E8EAED"
+                android:textColor="#E0E8DD"
                 android:textSize="14sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -93,7 +93,7 @@
             android:textSize="15sp"
             android:textAllCaps="false"
             android:layout_marginTop="28dp"
-            android:backgroundTint="#7C5CFC" />
+            android:backgroundTint="#7BC894" />
 
     </LinearLayout>
 </ScrollView>
