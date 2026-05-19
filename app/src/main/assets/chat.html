@@ -35,13 +35,19 @@ html,body{height:100%;overflow:hidden;font-family:'Geist',system-ui,sans-serif;f
 #chat::-webkit-scrollbar{display:none}
 #chat{scrollbar-width:none}
 
-/* ── User bubble ── */
-.bubble.user{padding:12px 16px}
-.bubble.user .md{padding-left:32px;font-size:15.5px;line-height:1.5;color:var(--ink);letter-spacing:-.1px}
+/* ── User bubble (right-aligned) ── */
+.bubble.user{padding:10px 16px;display:flex;flex-direction:column;align-items:flex-end}
+.bubble.user .msg-hdr{display:flex;align-items:center;gap:6;margin-bottom:4px;flex-direction:row-reverse}
+.bubble.user .msg-name{font-family:'Geist',sans-serif;font-size:12px;font-weight:600;color:var(--tan)}
+.bubble.user .msg-time{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint)}
+.bubble.user .md{font-size:15.5px;line-height:1.5;color:var(--ink);letter-spacing:-.1px;max-width:85%}
 
-/* ── AI bubble ── */
-.bubble.ai{padding:12px 16px}
-.bubble.ai .md{background:var(--surface);border-radius:14px;border:0.5px solid var(--border);padding:12px 14px;font-size:15px;line-height:1.55;color:var(--ink);letter-spacing:-.1px}
+/* ── AI bubble (left-aligned) ── */
+.bubble.ai{padding:10px 16px}
+.bubble.ai .msg-hdr{display:flex;align-items:center;gap:6;margin-bottom:4px}
+.bubble.ai .msg-name{font-family:'Geist',sans-serif;font-size:12px;font-weight:600;color:var(--sage)}
+.bubble.ai .msg-time{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint)}
+.bubble.ai .md{background:var(--surface);border-radius:14px;border:0.5px solid var(--border);padding:12px 14px;font-size:15px;line-height:1.55;color:var(--ink);letter-spacing:-.1px;max-width:85%}
 .bubble.ai .md p{margin:8px 0 0}.bubble.ai .md p:first-child{margin-top:0}
 .bubble.ai .md strong{font-weight:600;color:var(--ink)}
 .bubble.ai .md em{color:var(--ink-soft);font-style:italic}
@@ -83,8 +89,7 @@ html,body{height:100%;overflow:hidden;font-family:'Geist',system-ui,sans-serif;f
 .tool-name{color:var(--tan);font-weight:600}
 .tool-args{color:var(--ink-muted)}
 
-/* ── Bubble header ── */
-.time{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);margin-bottom:4px;display:block}
+/* ── Bubble header (replaced by .msg-hdr) ── */
 
 /* ── Typing indicator ── */
 .typing{padding:8px 16px;margin-top:4px}
@@ -288,11 +293,14 @@ function copyCode(btn){
 function addMsg(role,text){
   var d=document.createElement('div');
   d.className='bubble '+(role==='user'?'user':'ai');
-  var ts=document.createElement('span');ts.className='time';ts.textContent=tstr();
+  var hdr=document.createElement('div');hdr.className='msg-hdr';
+  var name=document.createElement('span');name.className='msg-name';name.textContent=role==='user'?'You':'Pi';
+  var ts=document.createElement('span');ts.className='msg-time';ts.textContent=tstr();
+  hdr.appendChild(name);hdr.appendChild(ts);
   var body=document.createElement('div');body.className='md';
   if(role==='user')body.innerHTML='<p>'+iMD(text)+'</p>';
   else body.textContent=text;
-  d.appendChild(ts);d.appendChild(body);$chat.appendChild(d);scroll();
+  d.appendChild(hdr);d.appendChild(body);$chat.appendChild(d);scroll();
   return body;
 }
 
@@ -308,9 +316,12 @@ function hideType(){if($typing){$typing.remove();$typing=null}}
 function ensureAI(){
   if($aiBody)return;
   var d=document.createElement('div');d.className='bubble ai';
-  var ts=document.createElement('span');ts.className='time';ts.textContent='';
+  var hdr=document.createElement('div');hdr.className='msg-hdr';
+  var name=document.createElement('span');name.className='msg-name';name.textContent='Pi';
+  var ts=document.createElement('span');ts.className='msg-time';ts.textContent='';
+  hdr.appendChild(name);hdr.appendChild(ts);
   $aiBody=document.createElement('div');$aiBody.className='md';
-  d.appendChild(ts);d.appendChild($aiBody);$chat.appendChild(d);
+  d.appendChild(hdr);d.appendChild($aiBody);$chat.appendChild(d);
 }
 
 function addThink(){
@@ -338,7 +349,7 @@ function setBusy(y){
 
 function finishTurn(){
   if($aiBody){
-    var tsEl=$aiBody.parentElement.querySelector('.time');
+    var tsEl=$aiBody.parentElement.querySelector('.msg-time');
     if(tsEl)tsEl.textContent=tstr();
     var raw=$aiBody.textContent;
     if(raw.trim()){$aiBody.innerHTML=rMD(raw);scroll()}
