@@ -259,6 +259,26 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @JavascriptInterface
+        public void cancel() {
+            // No-op — proxy doesn't support cancel; handled on JS side
+        }
+
+        @JavascriptInterface
+        public void newChat() {
+            if (ws != null && ws.isOpen()) {
+                ws.send("{\"type\":\"new_session\"}");
+            }
+        }
+
+        @JavascriptInterface
+        public void openURL(String url) {
+            mainHandler.post(() -> {
+                Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
+                startActivity(intent);
+            });
+        }
+
+        @JavascriptInterface
         public void openConfig() {
             mainHandler.post(() -> {
                 Intent intent = new Intent(MainActivity.this, ConfigActivity.class);

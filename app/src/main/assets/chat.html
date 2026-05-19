@@ -779,17 +779,44 @@ function onDisconnect(){$dot.className='off';showRC(15)}
    BRIDGE
    ══════════════════════════════════════════════ */
 
-window.ChatBridge={
-  onSend:function(msg){var url=$inp.getAttribute('data-url');if(url)window.AndroidWebSocket.send(url,msg)},
-  onCancel:function(){var url=$inp.getAttribute('data-url');if(url)window.AndroidWebSocket.cancel(url)},
-  onNewChat:function(){var url=$inp.getAttribute('data-url');if(url)window.AndroidWebSocket.newChat(url)},
-  onEvent:function(ev){onEvent(typeof ev==='string'?JSON.parse(ev):ev)},
-  onConnect:function(){onConnect()},
-  onDisconnect:function(){onDisconnect()},
-  showReconnect:function(cnt){showRC(cnt)},
-  openConfig:function(){window.AndroidActivity.openConfig()},
-  openURL:function(url){window.AndroidActivity.openURL(url)}
+/* ══════════════════════════════════════════════
+   BRIDGE (Java→JS)
+   ══════════════════════════════════════════════ */
+
+/* Called by MainActivity Java when WS connects/disconnects */
+window.onWsOpen=function(){onConnect()};
+window.onWsClose=function(){onDisconnect()};
+window.onWsError=function(msg){onDisconnect()};
+
+/* Called by MainActivity Java for each raw stdout line from pi */
+window.onMessage=function(raw){
+  // pi stdout is line-delimited JSON. Parse and convert to our event format.
+  var ev;
+  try{ev=JSON.parse(raw)}catch(e){return}
+  var type=ev.event||ev.type||'';
+  if(!type)return;
+  // Map pi event types to our internal format
+  var mapped={
+    type:type,
+    text:ev.text||ev.delta||ev.content||'',
+    data:ev.data||null,
+    items:ev.items||ev.sources||null
+  };
+  onEvent(mapped);
 };
+
+/* JS→Java bridge — save Java ref before overwriting */
+var _java = window.ChatBridge;
+window.ChatBridge={
+  onSend:function(msg){_java.send(msg)},
+  onCancel:function(){_java.cancel()},
+  onNewChat:function(){_java.newChat()},
+  openConfig:function(){_java.openConfig()},
+  openURL:function(url){_java.openURL(url)}
+};
+
+/* Auto-resize input on load */
+autoH();
 
 /* Auto-resize input on load */
 autoH();
