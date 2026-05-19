@@ -69,12 +69,23 @@ public class MainActivity extends AppCompatActivity {
         setupNetworkMonitoring();
     }
 
+    private volatile boolean isConnecting = false;
+
     private void connectWebSocket() {
+        if (isConnecting) return;
+        if (ws != null && ws.isOpen()) return;
+
         String ip = AppSettings.getServerIp(this);
         int port = AppSettings.getPort(this);
         String url = "ws://" + ip + ":" + port;
 
         cancelScheduledReconnect();
+        isConnecting = true;
+
+        // Close stale connection if any
+        if (ws != null && !ws.isOpen()) {
+            try { ws.close(); } catch (Exception ignored) {}
+        }
 
         try {
             URI uri = new URI(url);
@@ -82,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onOpen(ServerHandshake sh) {
                     Log.d(TAG, "WebSocket connected");
+                    isConnecting = false;
                     reconnectDelay = 2000;
                     mainHandler.post(() -> {
                         setStatus("● Connected", "#6C63FF");
@@ -93,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onClose(int code, String reason, boolean remote) {
                     Log.d(TAG, "WebSocket closed: " + code + ", remote=" + remote);
+                    isConnecting = false;
                     mainHandler.post(() -> {
                         setStatus("✕ Disconnected", "#FF4757");
                         webView.evaluateJavascript("window.onWsClose();", null);
@@ -105,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onError(Exception ex) {
                     Log.e(TAG, "WebSocket error", ex);
+                    isConnecting = false;
                     mainHandler.post(() -> {
                         setStatus("✕ Error", "#FF4757");
                         webView.evaluateJavascript(
