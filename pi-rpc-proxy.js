@@ -3,48 +3,83 @@
  * pi-rpc-proxy — Bridges `pi --mode rpc` to a WebSocket server.
  *
  * Run on your PC where pi is installed:
- *   node pi-rpc-proxy.js [--port 8765] [--host 0.0.0.0]
+ *   node pi-rpc-proxy.js [--port 8765] [--host 0.0.0.0] [--session]
  *
  * The Android APK connects to ws://<your-pc-ip>:<port>
+ *
+ * Options:
+ *   --port <N>    WebSocket port (default: 8765)
+ *   --host <H>    Bind address  (default: 0.0.0.0)
+ *   --session     Enable persistent sessions (default: no-session)
+ *
+ * Session mode:
+ *   Without --session, each prompt is independent (no memory between prompts).
+ *   With --session, pi remembers context. The "New Chat" button restarts pi
+ *   to start a fresh session.
  */
 const { spawn } = require('child_process');
 const { WebSocketServer } = require('ws');
 
-const port = parseInt(process.argv[2]) || 8765;
-const host = process.argv.includes('--host')
-  ? process.argv[process.argv.indexOf('--host') + 1]
-  : '0.0.0.0';
+const args = process.argv.slice(2);
 
-const piProcess = spawn('pi', ['--mode', 'rpc', '--no-session'], {
-  env: { ...process.env, PI_TELEMETRY: '0', PI_SKIP_VERSION_CHECK: '1', PI_OFFLINE: '1' },
-});
+function getArg(name) {
+  const idx = args.indexOf(name);
+  return idx >= 0 ? args[idx + 1] : undefined;
+}
+const port = parseInt(getArg('--port')) || 8765;
+const host = getArg('--host') || '0.0.0.0';
+const sessionMode = args.includes('--session');
+
+console.log(`Session mode: ${sessionMode ? 'enabled' : 'disabled (--no-session)'}`);
+
+let piProcess;
+
+function spawnPi() {
+  if (piProcess) {
+    try { piProcess.kill('SIGTERM'); } catch (_) {}
+  }
+  const cmdArgs = ['--mode', 'rpc'];
+  if (!sessionMode) cmdArgs.push('--no-session');
+
+  piProcess = spawn('pi', cmdArgs, {
+    env: { ...process.env, PI_TELEMETRY: '0', PI_SKIP_VERSION_CHECK: '1', PI_OFFLINE: '1' },
+  });
+
+  let buf = '';
+  piProcess.stdout.on('data', chunk => {
+    buf += typeof chunk === 'string' ? chunk : chunk.toString();
+    const lines = buf.split('\n');
+    buf = lines.pop();
+    for (const line of lines) {
+      if (line.trim()) {
+        for (const ws of clients) {
+          if (ws.readyState === 1) ws.send(line);
+        }
+      }
+    }
+  });
+
+  piProcess.stderr.on('data', chunk => process.stderr.write(chunk));
+
+  piProcess.on('close', code => {
+    console.log(`pi process exited with code ${code}`);
+    if (!process.exitCode) {
+      // If we didn't already exit, try to restart
+      setTimeout(() => {
+        console.log('Restarting pi process...');
+        spawnPi();
+      }, 2000);
+    }
+  });
+
+  console.log(`pi spawned: ${cmdArgs.join(' ')}`);
+}
 
 const clients = new Set();
 const wss = new WebSocketServer({ host, port });
 console.log(`pi-rpc-proxy listening on ws://${host}:${port}`);
 
-// Broadcast pi stdout to all connected clients
-let buf = '';
-piProcess.stdout.on('data', chunk => {
-  buf += typeof chunk === 'string' ? chunk : chunk.toString();
-  const lines = buf.split('\n');
-  buf = lines.pop();
-  for (const line of lines) {
-    if (line.trim()) {
-      for (const ws of clients) {
-        if (ws.readyState === 1) ws.send(line);
-      }
-    }
-  }
-});
-
-piProcess.stderr.on('data', chunk => process.stderr.write(chunk));
-
-piProcess.on('close', code => {
-  console.log(`pi process exited with code ${code}`);
-  wss.close();
-  process.exit(code || 0);
-});
+spawnPi();
 
 wss.on('connection', ws => {
   clients.add(ws);
@@ -52,7 +87,21 @@ wss.on('connection', ws => {
 
   ws.on('message', msg => {
     const text = typeof msg === 'string' ? msg : msg.toString();
-    if (text.trim()) {
+    try {
+      const json = JSON.parse(text);
+      if (json.type === 'new_session') {
+        console.log('New session requested — restarting pi');
+        spawnPi();
+        // Broadcast a notification to all clients
+        const notify = JSON.stringify({ type: 'session_reset' });
+        for (const c of clients) {
+          if (c.readyState === 1) c.send(notify);
+        }
+        return;
+      }
+    } catch (_) { /* not JSON, pass through */ }
+
+    if (text.trim() && piProcess && piProcess.stdin.writable) {
       piProcess.stdin.write(text + '\n');
     }
   });
@@ -71,6 +120,6 @@ wss.on('connection', ws => {
 // Graceful shutdown
 process.on('SIGINT', () => {
   console.log('\nShutting down…');
-  piProcess.kill('SIGTERM');
+  if (piProcess) piProcess.kill('SIGTERM');
   wss.close(() => process.exit(0));
 });

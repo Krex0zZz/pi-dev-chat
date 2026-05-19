@@ -148,6 +148,7 @@ var busy=false;
 var $aiBody=null;
 var $thinkTxt=null;
 var $typing=null;
+var clearedUntil=0; // timestamp after which stale events are allowed
 
 /* ════════════ UTILS ════════════ */
 function tstr(){var d=new Date(),h=d.getHours(),m=d.getMinutes(),s=d.getSeconds();return(h<10?'0':'')+h+':'+(m<10?'0':'')+m+':'+(s<10?'0':'')+s}
@@ -325,6 +326,7 @@ function getTxt(msg){
 window.onMessage=function(raw){
   var ev;try{ev=JSON.parse(raw)}catch(e){return}
   var am;
+  if(Date.now()<clearedUntil && ev.type!=='session_reset') return; // ignore stale events during restart
   switch(ev.type){
   case 'agent_start':hideType();showType();setBusy(true);break;
   case 'agent_end':hideType();setBusy(false);finishTurn();break;
@@ -383,10 +385,11 @@ $stop.addEventListener('click',function(){
 });
 
 $new.addEventListener('click',function(){
-  // --no-session: just clear local UI
   $chat.innerHTML='';
   hideType();setBusy(false);
   $aiBody=null;$thinkTxt=null;
+  clearedUntil=Date.now()+2000; // ignore stale events for 2s during proxy restart
+  ChatBridge.send(JSON.stringify({type:'new_session'}));
 });
 
 $cfg.addEventListener('click',function(){ChatBridge.openConfig()});

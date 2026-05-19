@@ -11,9 +11,17 @@ npm install ws
 
 **2. Run the proxy on your PC:**
 ```bash
+# Each prompt independent (no memory between prompts):
 node pi-rpc-proxy.js
-# listens on ws://0.0.0.0:8765
+
+# Persistent sessions (pi remembers context, "New Chat" starts fresh):
+node pi-rpc-proxy.js --session
 ```
+
+Options:
+- `--port <N>` — WebSocket port (default: `8765`)
+- `--host <H>` — Bind address (default: `0.0.0.0`)
+- `--session` — Enable persistent sessions
 
 **3. Transfer `pi-dev-chat.apk` to your phone and install**
 
@@ -39,7 +47,14 @@ That's it — no API key needed, no pi on the phone.
                                               └──────────────┘
 ```
 
-The proxy spawns `pi --mode rpc --no-session` on your PC and bridges its stdin/stdout to WebSocket clients. The APK connects to that WebSocket and relays events to the chat UI.
+The proxy spawns `pi --mode rpc` on your PC and bridges its stdin/stdout to WebSocket clients. The APK connects to that WebSocket and relays events to the chat UI.
+
+### Session Modes
+
+| Mode | Command | Behavior |
+|------|---------|----------|
+| **No session** (default) | `node pi-rpc-proxy.js` | Each prompt is independent. No memory between prompts. |
+| **Session** | `node pi-rpc-proxy.js --session` | Pi remembers context across prompts. "New Chat" button restarts pi for a fresh session. |
 
 ## Config Screen
 
