@@ -10,23 +10,58 @@
     --pri:#7C5CFC; --pri2:#5E43C4;
     --txt:#E8EAED; --txt2:#9AA0A6; --brd:#363B3F;
     --u-bg:#2D2558; --err:#FF5252; --ok:#00E676;
+    --warn:#FFA726;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--txt);height:100vh;display:flex;flex-direction:column;overflow:hidden}
-#hdr{display:flex;align-items:center;padding:12px 16px;background:var(--surf);border-bottom:1px solid var(--brd);min-height:52px;gap:10px}
-#hdr .logo{width:28px;height:28px;background:var(--pri);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff}
-#hdr .title{font-weight:600;font-size:16px;flex:1}
-#hdr .status{font-size:11px;color:var(--txt2);padding:2px 8px;border-radius:10px;background:var(--surf2)}
-#chat{flex:1;overflow-y:auto;padding:12px 12px 8px;display:flex;flex-direction:column;gap:6px}
-.msg{max-width:88%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5;word-wrap:break-word;white-space:pre-wrap}
+
+/* Header */
+#hdr{display:flex;align-items:center;padding:10px 16px;background:var(--surf);border-bottom:1px solid var(--brd);min-height:48px;gap:10px}
+#hdr .logo{width:26px;height:26px;background:var(--pri);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff}
+#hdr .title{font-weight:600;font-size:15px;flex:1}
+#hdr .status{font-size:10px;color:var(--txt2);padding:3px 10px;border-radius:10px;background:var(--surf2);display:flex;align-items:center;gap:5px}
+#hdr .status .dot{width:6px;height:6px;border-radius:50%;background:var(--txt2)}
+#hdr .status.connected .dot{background:var(--ok)}
+#hdr .status.connected{color:var(--ok)}
+#hdr .status.error .dot{background:var(--err)}
+#hdr .status.error{color:var(--err)}
+
+/* Disconnect overlay */
+#disconnectOverlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(27,31,32,0.92);z-index:100;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+#disconnectOverlay.show{display:flex}
+#disconnectOverlay .icon{font-size:48px;opacity:.7}
+#disconnectOverlay .msg{color:var(--txt2);font-size:14px;text-align:center;padding:0 24px}
+#disconnectOverlay .timer{color:var(--warn);font-size:28px;font-weight:600;font-family:monospace}
+#disconnectOverlay button{background:var(--pri);color:#fff;border:none;padding:10px 24px;border-radius:20px;font-size:14px;cursor:pointer;margin-top:8px}
+
+/* Chat area */
+#chat{flex:1;overflow-y:auto;padding:12px 12px 8px;display:flex;flex-direction:column;gap:2px}
+
+/* Messages */
+.msg-group{display:flex;flex-direction:column;margin-bottom:4px}
+.msg{max-width:88%;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.5;word-wrap:break-word;white-space:pre-wrap;position:relative}
 .msg.u{align-self:flex-end;background:var(--u-bg);border-bottom-right-radius:4px}
 .msg.a{align-self:flex-start;background:var(--surf);border:1px solid var(--brd);border-bottom-left-radius:4px}
-.msg.s{align-self:center;font-size:12px;color:var(--txt2);background:transparent;text-align:center}
-.msg .tc{margin-top:6px;padding:6px 10px;background:var(--surf2);border-radius:8px;font-size:12px;font-family:monospace;color:var(--txt2);display:flex;align-items:center;gap:6px}
-.msg .tc .dot{width:6px;height:6px;border-radius:50%;background:var(--pri);animation:pulse 1s infinite}
+.msg.s{align-self:center;font-size:11px;color:var(--txt2);background:var(--surf2);padding:5px 12px;border-radius:12px;text-align:center}
+.msg .time{font-size:9px;color:var(--txt2);opacity:.7;position:absolute;bottom:2px;right:6px}
+
+/* Tool calls */
+.msg .tc{margin-top:6px;padding:6px 10px;background:var(--surf2);border-radius:8px;font-size:11px;font-family:monospace;color:var(--txt2);display:flex;align-items:center;gap:6px}
+.msg .tc .dot{width:5px;height:5px;border-radius:50%;background:var(--pri);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.msg .tr{margin-top:4px;padding:6px 10px;background:var(--bg);border-radius:8px;font-size:11px;font-family:monospace;color:var(--txt2);max-height:120px;overflow-y:auto}
-#ia{padding:8px 12px 16px;background:var(--surf);border-top:1px solid var(--brd)}
+
+/* Tool results */
+.msg .tr{margin-top:4px;padding:6px 10px;background:var(--bg);border-radius:8px;font-size:11px;font-family:monospace;color:var(--txt2);max-height:120px;overflow-y:auto;border:1px solid var(--brd)}
+
+/* Typing indicator */
+.td{display:inline-flex;gap:3px;padding:4px 0}
+.td span{width:5px;height:5px;border-radius:50%;background:var(--txt2);animation:blink 1.4s infinite}
+.td span:nth-child(2){animation-delay:.2s}
+.td span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
+
+/* Input area */
+#ia{padding:8px 12px 12px;background:var(--surf);border-top:1px solid var(--brd)}
 #ir{display:flex;gap:8px;align-items:flex-end}
 #inp{flex:1;background:var(--surf2);border:1px solid var(--brd);border-radius:20px;padding:10px 16px;color:var(--txt);font-size:14px;font-family:inherit;resize:none;max-height:120px;line-height:1.4}
 #inp:focus{outline:none;border-color:var(--pri)}
@@ -34,23 +69,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 #sb{width:40px;height:40px;border-radius:50%;border:none;background:var(--pri);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
 #sb:disabled{background:var(--surf2);cursor:not-allowed}
 #sb:not(:disabled):hover{background:var(--pri2)}
-#tb{display:flex;gap:12px;padding:4px 0 0}
-#tb button{background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;padding:2px 0;font-family:inherit}
-#tb button:hover{color:var(--txt)}
-.td{display:inline-flex;gap:3px;padding:4px 0}
-.td span{width:5px;height:5px;border-radius:50%;background:var(--txt2);animation:blink 1.4s infinite}
-.td span:nth-child(2){animation-delay:.2s}
-.td span:nth-child(3){animation-delay:.4s}
-@keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
+
+/* Toolbar */
+#tb{display:flex;gap:0;padding-top:8px;border-top:1px solid var(--brd);margin-top:8px}
+#tb button{flex:1;background:none;border:none;color:var(--txt2);font-size:11px;cursor:pointer;padding:8px 0;font-family:inherit;border-right:1px solid var(--brd)}
+#tb button:last-child{border-right:none}
+#tb button:active{background:var(--surf2)}
 </style>
 </head>
 <body>
 <div id="hdr">
     <div class="logo">π</div>
     <div class="title">pi.dev</div>
-    <div class="status" id="badge">connecting…</div>
+    <div class="status" id="badge"><span class="dot"></span><span>connecting…</span></div>
 </div>
+
+<!-- Disconnect overlay -->
+<div id="disconnectOverlay">
+    <div class="icon">⟳</div>
+    <div class="msg">Connection lost<br>pi-rpc-proxy may have stopped</div>
+    <div class="timer" id="reconnectTimer">5s</div>
+    <button onclick="reconnectNow()">Reconnect Now</button>
+</div>
+
 <div id="chat"></div>
+
 <div id="ia">
     <div id="ir">
         <textarea id="inp" rows="1" placeholder="Ask pi something…"></textarea>
@@ -62,124 +105,232 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         <button onclick="goConfig()">⚙ Settings</button>
     </div>
 </div>
+
 <script>
-const chat=document.getElementById('chat');
-const inp=document.getElementById('inp');
-const sb=document.getElementById('sb');
-const badge=document.getElementById('badge');
-let aiMsg=null,streaming=false;
+const chat = document.getElementById('chat');
+const inp = document.getElementById('inp');
+const sb = document.getElementById('sb');
+const badge = document.getElementById('badge');
+const overlay = document.getElementById('disconnectOverlay');
+const timerEl = document.getElementById('reconnectTimer');
 
-inp.addEventListener('input',()=>{
-    inp.style.height='auto';
-    inp.style.height=Math.min(inp.scrollHeight,120)+'px';
-    sb.disabled=!inp.value.trim();
+let aiMsg = null, streaming = false;
+let aiTextSpan = null; // <span> for streaming text
+let reconnectCountdown = null;
+let reconnectSeconds = 0;
+
+// Auto-resize textarea
+inp.addEventListener('input', () => {
+    inp.style.height = 'auto';
+    inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
+    sb.disabled = !inp.value.trim();
 });
-inp.addEventListener('keydown',e=>{
-    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}
+inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
 });
-sb.addEventListener('click',sendMsg);
+sb.addEventListener('click', sendMsg);
 
-function sendMsg(){
-    const t=inp.value.trim();if(!t)return;
-    inp.value='';inp.style.height='auto';sb.disabled=true;
-    add('u',t);
-    ChatBridge.send(JSON.stringify({type:"prompt",message:t}));
+function sendMsg() {
+    const t = inp.value.trim(); if (!t) return;
+    inp.value = ''; inp.style.height = 'auto'; sb.disabled = true;
+    add('user', t);
+    ChatBridge.send(JSON.stringify({ type: "prompt", message: t }));
 }
 
-function send(type){
-    ChatBridge.send(JSON.stringify({type:type}));
+function send(type) {
+    ChatBridge.send(JSON.stringify({ type: type }));
 }
 
-function add(role,text){
-    const d=document.createElement('div');
-    d.className='msg '+(role==='user'?'u':role==='ai'?'a':'s');
-    if(role==='ai'){d.id='ai-'+Date.now();aiMsg=d;}
-    d.textContent=text;chat.appendChild(d);scroll();return d;
+function ts() {
+    const now = new Date();
+    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function scroll(){chat.scrollTop=chat.scrollHeight;}
+function add(role, text) {
+    const d = document.createElement('div');
+    d.className = 'msg ' + (role === 'user' ? 'u' : role === 'ai' ? 'a' : 's');
 
-function toolCall(name,args){
-    if(!aiMsg)return;
-    const d=document.createElement('div');d.className='tc';
-    d.innerHTML=`<span class="dot"></span><span>${name}(${JSON.stringify(args||{}).substring(0,80)}…)</span>`;
-    aiMsg.appendChild(d);scroll();
+    if (role === 'ai') {
+        // For AI messages, use a text span so we can stream without breaking timestamps
+        d.id = 'ai-' + Date.now();
+        aiMsg = d;
+        aiTextSpan = document.createElement('span');
+        aiTextSpan.textContent = text;
+        d.appendChild(aiTextSpan);
+        chat.appendChild(d);
+        scroll();
+        return d;
+    }
+
+    // User & system messages: simple text + timestamp
+    d.textContent = text;
+    const time = document.createElement('div');
+    time.className = 'time';
+    time.textContent = ts();
+    d.appendChild(time);
+    chat.appendChild(d);
+    scroll();
+    return d;
 }
 
-function toolResult(name,txt){
-    if(!aiMsg)return;
-    const d=document.createElement('div');d.className='tr';
-    d.textContent=`[${name}] ${(txt||'').substring(0,300)}`;
-    aiMsg.appendChild(d);scroll();
+function finalizeAiMsg() {
+    // Add timestamp to completed AI message
+    if (aiMsg) {
+        const time = document.createElement('div');
+        time.className = 'time';
+        time.textContent = ts();
+        aiMsg.appendChild(time);
+    }
 }
 
-function showTyping(){
-    if(aiMsg&&aiMsg.querySelector('.td'))return;
-    aiMsg=document.createElement('div');aiMsg.className='msg a';
-    aiMsg.innerHTML='<div class="td"><span></span><span></span><span></span></div>';
-    chat.appendChild(aiMsg);scroll();
+function scroll() {
+    requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
 }
 
-function hideTyping(){
-    if(aiMsg&&aiMsg.querySelector('.td'))aiMsg.textContent='';
+function toolCall(name, args) {
+    if (!aiMsg) return;
+    const d = document.createElement('div'); d.className = 'tc';
+    const argsStr = (JSON.stringify(args || {}).substring(0, 80)) + (JSON.stringify(args).length > 80 ? '…' : '');
+    d.innerHTML = `<span class="dot"></span><span>${name}(${argsStr})</span>`;
+    aiMsg.appendChild(d); scroll();
+}
+
+function toolResult(name, txt) {
+    if (!aiMsg) return;
+    const d = document.createElement('div'); d.className = 'tr';
+    d.textContent = `[${name}] ${(txt || '').substring(0, 300)}`;
+    aiMsg.appendChild(d); scroll();
+}
+
+function showTyping() {
+    if (aiMsg && aiMsg.querySelector('.td')) return;
+    aiMsg = document.createElement('div');
+    aiMsg.className = 'msg a';
+    aiTextSpan = document.createElement('span');
+    aiMsg.appendChild(aiTextSpan);
+    aiMsg.innerHTML += '<div class="td"><span></span><span></span><span></span></div>';
+    chat.appendChild(aiMsg); scroll();
+}
+
+function hideTyping() {
+    if (aiMsg) {
+        const td = aiMsg.querySelector('.td');
+        if (td) td.remove();
+    }
+}
+
+function startReconnectCountdown(seconds) {
+    stopReconnectCountdown();
+    reconnectSeconds = seconds;
+    overlay.classList.add('show');
+    timerEl.textContent = reconnectSeconds + 's';
+
+    reconnectCountdown = setInterval(() => {
+        reconnectSeconds--;
+        if (reconnectSeconds <= 0) {
+            stopReconnectCountdown();
+            return;
+        }
+        timerEl.textContent = reconnectSeconds + 's';
+    }, 1000);
+}
+
+function stopReconnectCountdown() {
+    if (reconnectCountdown) {
+        clearInterval(reconnectCountdown);
+        reconnectCountdown = null;
+    }
+    overlay.classList.remove('show');
+}
+
+function reconnectNow() {
+    stopReconnectCountdown();
+    badge.className = 'status';
+    badge.innerHTML = '<span class="dot"></span><span>connecting…</span>';
 }
 
 // ── WebSocket event handlers ──
 
-window.onWsOpen=function(){
-    badge.textContent='connected';badge.style.color='#00E676';
-    add('s','pi agent connected');sb.disabled=false;inp.focus();
+window.onWsOpen = function() {
+    stopReconnectCountdown();
+    badge.className = 'status connected';
+    badge.innerHTML = '<span class="dot"></span><span>connected</span>';
+    add('system', 'pi agent connected');
+    sb.disabled = false;
+    inp.focus();
 };
 
-window.onWsClose=function(){
-    badge.textContent='disconnected';badge.style.color='#FF5252';
-    add('s','Disconnected — reconnecting…');
+window.onWsClose = function() {
+    badge.className = 'status error';
+    badge.innerHTML = '<span class="dot"></span><span>disconnected</span>';
+    add('system', 'Disconnected — reconnecting…');
+    startReconnectCountdown(5);
 };
 
-window.onWsError=function(err){
-    badge.textContent='error';badge.style.color='#FF5252';
-    add('s','Error: '+err);
+window.onWsError = function(err) {
+    stopReconnectCountdown();
+    badge.className = 'status error';
+    badge.innerHTML = '<span class="dot"></span><span>error</span>';
+    add('system', 'Error: ' + err);
 };
 
-window.onMessage=function(jsonLine){
-    let ev;try{ev=JSON.parse(jsonLine);}catch(e){return;}
-    switch(ev.type){
+window.onMessage = function(jsonLine) {
+    // Cancel overlay on receiving data
+    stopReconnectCountdown();
+    badge.className = 'status connected';
+    badge.innerHTML = '<span class="dot"></span><span>connected</span>';
+
+    let ev;
+    try { ev = JSON.parse(jsonLine); } catch (e) { return; }
+
+    switch (ev.type) {
         case 'agent_start':
-            streaming=true;showTyping();break;
+            streaming = true; showTyping(); break;
         case 'agent_end':
-            streaming=false;aiMsg=null;
-            sb.disabled=!inp.value.trim();inp.focus();break;
-        case 'message_update':{
-            const am=ev.assistantMessageEvent;if(!am)break;
-            if(am.type==='start'||am.type==='text_start'){
+            streaming = false;
+            finalizeAiMsg();
+            aiMsg = null;
+            sb.disabled = !inp.value.trim();
+            inp.focus();
+            break;
+        case 'message_update': {
+            const am = ev.assistantMessageEvent; if (!am) break;
+            if (am.type === 'start' || am.type === 'text_start') {
                 hideTyping();
-                if(!aiMsg)aiMsg=add('ai','');
+                if (!aiMsg) {
+                    aiMsg = document.createElement('div');
+                    aiMsg.className = 'msg a';
+                    aiTextSpan = document.createElement('span');
+                    aiMsg.appendChild(aiTextSpan);
+                    chat.appendChild(aiMsg);
+                }
             }
-            if(am.type==='text_delta'&&aiMsg){
-                aiMsg.textContent+=am.delta;scroll();
+            if (am.type === 'text_delta' && aiTextSpan) {
+                aiTextSpan.textContent += am.delta;
+                scroll();
             }
-            if(am.type==='toolcall_end'){
-                const tc=am.toolCall;
-                toolCall(tc.name,tc.args);
+            if (am.type === 'toolcall_end') {
+                const tc = am.toolCall;
+                toolCall(tc.name, tc.args);
             }
             break;
         }
         case 'tool_execution_end':
-            if(ev.result&&ev.result.content){
-                const txt=ev.result.content.map(c=>c.text||'').join('\n');
-                toolResult(ev.toolName,txt);
-            }break;
-        case 'compaction_start':add('s','Compacting context…');break;
-        case 'compaction_end':add('s','Compaction complete');break;
+            if (ev.result && ev.result.content) {
+                const txt = ev.result.content.map(c => c.text || '').join('\n');
+                toolResult(ev.toolName, txt);
+            } break;
+        case 'compaction_start': add('system', 'Compacting context…'); break;
+        case 'compaction_end': add('system', 'Compaction complete'); break;
         case 'auto_retry_start':
-            add('s','Retrying… '+(ev.errorMessage||'').substring(0,60));break;
+            add('system', 'Retrying… ' + (ev.errorMessage || '').substring(0, 60)); break;
         case 'auto_retry_end':
-            if(!ev.success)add('s','Retry failed: '+(ev.finalError||'unknown'));break;
+            if (!ev.success) add('system', 'Retry failed: ' + (ev.finalError || 'unknown')); break;
     }
 };
 
-function goConfig(){
-    ChatBridge.send(JSON.stringify({type:'__config'}));
+function goConfig() {
+    ChatBridge.openConfig();
 }
 </script>
 </body>
