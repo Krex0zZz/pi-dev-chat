@@ -802,6 +802,7 @@ window.onMessage=function(raw){
     data:ev.data||null,
     items:ev.items||ev.sources||null
   };
+  console.log('[event]',type,'|',JSON.stringify(ev).slice(0,120));
   onEvent(mapped);
 };
 
