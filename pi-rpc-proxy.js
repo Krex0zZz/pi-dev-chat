@@ -33,11 +33,15 @@ const sessionMode = args.includes('--session');
 console.log(`Session mode: ${sessionMode ? 'enabled' : 'disabled (--no-session)'}`);
 
 let piProcess;
+let spawnId = 0;
 
 function spawnPi() {
+  const myId = ++spawnId;
+
   if (piProcess) {
     try { piProcess.kill('SIGTERM'); } catch (_) {}
   }
+
   const cmdArgs = ['--mode', 'rpc'];
   if (!sessionMode) cmdArgs.push('--no-session');
 
@@ -62,9 +66,9 @@ function spawnPi() {
   piProcess.stderr.on('data', chunk => process.stderr.write(chunk));
 
   piProcess.on('close', code => {
-    console.log(`pi process exited with code ${code}`);
-    if (!process.exitCode) {
-      // If we didn't already exit, try to restart
+    console.log(`pi process exited with code ${code} (spawn#${myId}, current#${spawnId})`);
+    // Only auto-restart if this is still the current spawn (not a stale close from killed process)
+    if (myId === spawnId && !process.exitCode) {
       setTimeout(() => {
         console.log('Restarting pi process...');
         spawnPi();
@@ -72,7 +76,7 @@ function spawnPi() {
     }
   });
 
-  console.log(`pi spawned: ${cmdArgs.join(' ')}`);
+  console.log(`pi spawned: ${cmdArgs.join(' ')} (spawn#${myId})`);
 }
 
 const clients = new Set();
@@ -92,7 +96,6 @@ wss.on('connection', ws => {
       if (json.type === 'new_session') {
         console.log('New session requested — restarting pi');
         spawnPi();
-        // Broadcast a notification to all clients
         const notify = JSON.stringify({ type: 'session_reset' });
         for (const c of clients) {
           if (c.readyState === 1) c.send(notify);
@@ -117,7 +120,6 @@ wss.on('connection', ws => {
   });
 });
 
-// Graceful shutdown
 process.on('SIGINT', () => {
   console.log('\nShutting down…');
   if (piProcess) piProcess.kill('SIGTERM');
