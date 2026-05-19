@@ -36,18 +36,18 @@ html,body{height:100%;overflow:hidden;font-family:'Geist',system-ui,sans-serif;f
 #chat{scrollbar-width:none}
 
 /* ── User bubble (right-aligned) ── */
-.bubble.user{padding:10px 16px;display:flex;flex-direction:column;align-items:flex-end}
+.bubble.user{padding:8px 16px;display:flex;flex-direction:column;align-items:flex-end}
 .bubble.user .msg-hdr{display:flex;align-items:center;gap:6;margin-bottom:4px;flex-direction:row-reverse}
 .bubble.user .msg-name{font-family:'Geist',sans-serif;font-size:12px;font-weight:600;color:var(--tan)}
 .bubble.user .msg-time{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint)}
-.bubble.user .md{font-size:15.5px;line-height:1.5;color:var(--ink);letter-spacing:-.1px;max-width:85%}
+.bubble.user .md{background:var(--sage-soft);border-radius:14px;padding:10px 14px;font-size:15.5px;line-height:1.5;color:var(--ink);letter-spacing:-.1px;max-width:85%}
 
 /* ── AI bubble (left-aligned) ── */
-.bubble.ai{padding:10px 16px}
+.bubble.ai{padding:8px 16px}
 .bubble.ai .msg-hdr{display:flex;align-items:center;gap:6;margin-bottom:4px}
 .bubble.ai .msg-name{font-family:'Geist',sans-serif;font-size:12px;font-weight:600;color:var(--sage)}
 .bubble.ai .msg-time{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint)}
-.bubble.ai .md{background:var(--surface);border-radius:14px;border:0.5px solid var(--border);padding:12px 14px;font-size:15px;line-height:1.55;color:var(--ink);letter-spacing:-.1px;max-width:85%}
+.bubble.ai .md{background:var(--surface);border-radius:14px;border:0.5px solid var(--border);padding:14px 16px;font-size:15px;line-height:1.55;color:var(--ink);letter-spacing:-.1px;max-width:85%}
 .bubble.ai .md p{margin:8px 0 0}.bubble.ai .md p:first-child{margin-top:0}
 .bubble.ai .md strong{font-weight:600;color:var(--ink)}
 .bubble.ai .md em{color:var(--ink-soft);font-style:italic}
@@ -77,17 +77,21 @@ html,body{height:100%;overflow:hidden;font-family:'Geist',system-ui,sans-serif;f
 /* ── Blockquotes ── */
 .bubble.ai .md blockquote{border-left:2px solid var(--sage);padding-left:12px;margin:6px 0;color:var(--ink-soft);font-style:italic}
 
-/* ── Thinking ── */
-.thinking{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;margin:4px 16px;overflow:hidden}
-.thinking-label{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;font-family:'Geist',sans-serif;font-size:12px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.3px;cursor:pointer}
+/* ── Thinking card ── */
+.thinking{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;margin:6px 16px;overflow:hidden}
+.thinking-label{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-family:'Geist',sans-serif;font-size:11.5px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.3px;cursor:pointer}
 .thinking-label span:last-child{color:var(--ink-faint);font-size:11px}
-.thinking .think-body{display:block;padding:0 12px 10px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-soft);line-height:1.5;word-break:break-word}
+.thinking .think-body{display:block;padding:0 14px 12px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-soft);line-height:1.55;word-break:break-word}
 .thinking:not(.open) .think-body{display:none}
 
-/* ── Tool calls ── */
-.tool-call{display:flex;gap:8;align-items:baseline;padding:6px 16px;font-family:'JetBrains Mono',monospace;font-size:11px}
-.tool-name{color:var(--tan);font-weight:600}
-.tool-args{color:var(--ink-muted)}
+/* ── Tool call card ── */
+.tool-call{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;margin:4px 16px;overflow:hidden}
+.tool-hdr{display:flex;align-items:center;gap:8;padding:8px 14px;cursor:pointer;font-family:'Geist',sans-serif}
+.tool-icon{color:var(--tan);font-size:13px}
+.tool-name{font-size:13px;font-weight:600;color:var(--tan)}
+.tool-toggle{margin-left:auto;font-size:10px;color:var(--ink-faint)}
+.tool-args{display:none;font-family:'JetBrains Mono',monospace;font-size:11px;padding:0 14px 10px;color:var(--ink-muted);word-break:break-all;white-space:pre-wrap}
+.tool-call.open .tool-args{display:block}
 
 /* ── Bubble header (replaced by .msg-hdr) ── */
 
@@ -337,9 +341,14 @@ function addThink(){
 
 function addTool(name,args){
   var d=document.createElement('div');d.className='tool-call';
-  var n=document.createElement('span');n.className='tool-name';n.textContent='\u26A1 '+name;
-  var a=document.createElement('span');a.className='tool-args';a.textContent=JSON.stringify(args||{});
-  d.appendChild(n);d.appendChild(a);$chat.appendChild(d);scroll();
+  d.addEventListener('click',function(){this.classList.toggle('open')});
+  var hdr=document.createElement('div');hdr.className='tool-hdr';
+  var ic=document.createElement('span');ic.className='tool-icon';ic.textContent='\u26A1';
+  var nm=document.createElement('span');nm.className='tool-name';nm.textContent=name||'tool';
+  var tg=document.createElement('span');tg.className='tool-toggle';tg.textContent='\u25BC';
+  hdr.appendChild(ic);hdr.appendChild(nm);hdr.appendChild(tg);
+  var ar=document.createElement('div');ar.className='tool-args';ar.textContent=JSON.stringify(args||{});
+  d.appendChild(hdr);d.appendChild(ar);$chat.appendChild(d);scroll();
 }
 
 function setBusy(y){
