@@ -82,9 +82,9 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onOpen(ServerHandshake sh) {
                     Log.d(TAG, "WebSocket connected");
-                    reconnectDelay = 2000; // reset backoff
+                    reconnectDelay = 2000;
                     mainHandler.post(() -> {
-                        setStatus("● Connected", "#00E676");
+                        setStatus("● Connected", "#6C63FF");
                         reconnectBtn.setVisibility(View.GONE);
                         webView.evaluateJavascript("window.onWsOpen();", null);
                     });
@@ -94,9 +94,8 @@ public class MainActivity extends AppCompatActivity {
                 public void onClose(int code, String reason, boolean remote) {
                     Log.d(TAG, "WebSocket closed: " + code + ", remote=" + remote);
                     mainHandler.post(() -> {
-                        setStatus("✕ Disconnected", "#FF5252");
+                        setStatus("✕ Disconnected", "#FF4757");
                         webView.evaluateJavascript("window.onWsClose();", null);
-
                         if (!isFinishing() && !isDestroyed()) {
                             scheduleReconnect();
                         }
@@ -107,10 +106,9 @@ public class MainActivity extends AppCompatActivity {
                 public void onError(Exception ex) {
                     Log.e(TAG, "WebSocket error", ex);
                     mainHandler.post(() -> {
-                        setStatus("✕ Error: " + ex.getMessage(), "#FF5252");
-                        webView.evaluateJavascript("window.onWsError('" +
-                                ex.getMessage().replace("'", "\\'") + "');", null);
-
+                        setStatus("✕ Error", "#FF4757");
+                        webView.evaluateJavascript(
+                                "window.onWsError('" + ex.getMessage().replace("'", "\\'") + "');", null);
                         if (!isFinishing() && !isDestroyed()) {
                             scheduleReconnect();
                         }
@@ -120,42 +118,34 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onMessage(String message) {
                     mainHandler.post(() -> {
+                        // Escape only backslash and single-quote for single-quoted JS string
+                        // Do NOT escape double-quote — JSON " chars are fine inside single quotes
                         String escaped = message.replace("\\", "\\\\")
-                                .replace("\"", "\\\"")
-                                .replace("\n", "\\n")
-                                .replace("\r", "\\r")
-                                .replace("\t", "\\t");
-                        webView.evaluateJavascript("window.onMessage('" + escaped + "');", null);
+                                .replace("'", "\\'");
+                        webView.evaluateJavascript(
+                                "window.onMessage('" + escaped + "')", null);
                     });
                 }
             };
             ws.connect();
         } catch (URISyntaxException e) {
-            setStatus("✕ Bad URL: " + url, "#FF5252");
+            setStatus("✕ Bad URL: " + url, "#FF4757");
         }
     }
 
     private void scheduleReconnect() {
         cancelScheduledReconnect();
-
         reconnectBtn.setVisibility(View.VISIBLE);
-        String timeStr = (reconnectDelay / 1000) + "s";
-        setStatus("↻ Reconnecting in " + timeStr, "#FFA726");
+        setStatus("↻ Reconnecting in " + (reconnectDelay / 1000) + "s", "#FFA726");
 
         reconnectRunnable = () -> {
-            if (ws != null && ws.isOpen()) {
-                return;
-            }
-            if (isFinishing() || isDestroyed()) {
-                return;
-            }
-
+            if (ws != null && ws.isOpen()) return;
+            if (isFinishing() || isDestroyed()) return;
             if (!isNetworkAvailable()) {
-                setStatus("↻ No network, retrying in " + (reconnectDelay / 1000) + "s", "#FFA726");
+                reconnectDelay = Math.min(reconnectDelay * 2, 30000);
                 scheduleReconnect();
                 return;
             }
-
             setStatus("◌ Connecting...", "#FFA726");
             connectWebSocket();
         };
@@ -174,11 +164,11 @@ public class MainActivity extends AppCompatActivity {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         if (cm != null) {
             if (Build.VERSION.SDK_INT >= 23) {
-                Network network = cm.getActiveNetwork();
-                if (network != null) return true;
+                return cm.getActiveNetwork() != null;
             } else {
                 // @SuppressWarnings("deprecation")
-                if (cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isConnected()) return true;
+                Network n = cm.getActiveNetwork();
+                return n != null || (cm.getActiveNetworkInfo() != null && cm.getActiveNetworkInfo().isConnected());
             }
         }
         return false;
@@ -191,28 +181,23 @@ public class MainActivity extends AppCompatActivity {
                 networkCallback = new ConnectivityManager.NetworkCallback() {
                     @Override
                     public void onAvailable(@NonNull Network network) {
-                        Log.d(TAG, "Network available");
                         mainHandler.post(() -> {
                             if (ws == null || !ws.isOpen()) {
-                                setStatus("◌ Network back, connecting...", "#FFA726");
                                 reconnectDelay = 2000;
                                 cancelScheduledReconnect();
+                                setStatus("◌ Network back", "#FFA726");
                                 connectWebSocket();
                             }
                         });
                     }
-
                     @Override
                     public void onLost(@NonNull Network network) {
-                        Log.d(TAG, "Network lost");
                         mainHandler.post(() -> {
-                            if (ws != null && ws.isOpen()) {
-                                setStatus("◌ Network lost...", "#FFA726");
-                            }
+                            if (ws != null && ws.isOpen())
+                                setStatus("◌ Network lost", "#FFA726");
                         });
                     }
                 };
-
                 NetworkRequest request = new NetworkRequest.Builder()
                         .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                         .build();
@@ -224,9 +209,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // If disconnected while in background, reconnect immediately
         if (ws != null && !ws.isOpen() && isNetworkAvailable()) {
-            setStatus("◌ Reconnecting...", "#FFA726");
             cancelScheduledReconnect();
             connectWebSocket();
         }
@@ -236,25 +219,13 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         cancelScheduledReconnect();
-
         if (networkCallback != null) {
-            ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-            if (cm != null) {
-                try {
-                    cm.unregisterNetworkCallback(networkCallback);
-                } catch (Exception e) {
-                    // ignore
-                }
-            }
+            try {
+                ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE))
+                        .unregisterNetworkCallback(networkCallback);
+            } catch (Exception ignored) {}
         }
-
-        // Don't close WebSocket unless truly finishing
-        // Keeps session alive when switching apps
-        if (isFinishing()) {
-            if (ws != null && ws.isOpen()) {
-                ws.close();
-            }
-        }
+        if (isFinishing() && ws != null && ws.isOpen()) ws.close();
     }
 
     private void setStatus(String text, String color) {
@@ -268,9 +239,8 @@ public class MainActivity extends AppCompatActivity {
             if (ws != null && ws.isOpen()) {
                 ws.send(json);
             } else {
-                mainHandler.post(() -> {
-                    Toast.makeText(MainActivity.this, "Not connected", Toast.LENGTH_SHORT).show();
-                });
+                mainHandler.post(() ->
+                        Toast.makeText(MainActivity.this, "Not connected", Toast.LENGTH_SHORT).show());
             }
         }
 

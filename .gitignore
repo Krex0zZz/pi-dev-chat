@@ -6,3 +6,4 @@ app/build/
 .DS_Store
 node_modules/
 pi-dev-chat.apk
+*.jsonl
