@@ -49,6 +49,69 @@ Only two fields:
 
 No API key. No model selection. No binary path. Your PC handles everything.
 
+---
+
+## ⚠️ WSL Users — Important!
+
+If `pi` is installed inside WSL (Ubuntu), the proxy **must** run inside WSL too — Windows CMD/PowerShell won't find the `pi` binary and will crash with `spawn pi ENOENT`.
+
+### The Problem
+
+WSL2 runs in a VM with its own network. By default, `0.0.0.0` inside WSL binds to the VM's internal IP (e.g. `172.26.128.5`), **not** your Windows WiFi IP (`192.168.1.190`). Your phone can't reach it.
+
+### Fix A — Mirrored Networking (Recommended)
+
+This makes WSL share the Windows network stack permanently.
+
+1. On Windows, create/edit `%USERPROFILE%\.wslconfig`:
+```ini
+[wsl2]
+networkingMode=mirrored
+```
+
+2. In Windows CMD/PowerShell:
+```powershell
+wsl --shutdown
+```
+
+3. Re-enter WSL. Verify:
+```bash
+hostname -I   # should show 192.168.1.190 (your Windows WiFi IP)
+```
+
+4. Run the proxy inside WSL:
+```bash
+cd /path/to/pi-dev-app
+npm install ws
+node pi-rpc-proxy.js
+```
+
+Your phone now connects to `192.168.1.190:8765` — same as normal.
+
+### Fix B — Use WSL's IP (Quick, temporary)
+
+If you don't want to change WSL networking:
+
+```bash
+# Inside WSL, find the VM IP:
+hostname -I | awk '{print $1}'
+# e.g. 172.26.128.5
+```
+
+Run the proxy inside WSL, then enter **that WSL IP** in the phone app config.
+
+> ⚠️ The WSL2 IP changes after every restart. Fix A avoids this.
+
+### Common Errors
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `spawn pi ENOENT` | Running proxy in Windows CMD instead of WSL | Run `node pi-rpc-proxy.js` **inside WSL** |
+| `ETIMEDOUT` / can't connect | Phone using `192.168.1.190` but proxy is on WSL VM IP | Use mirrored networking (Fix A) or enter WSL IP (Fix B) |
+| `EADDRNOTAVAIL` | Binding to wrong interface | Ensure `--host 0.0.0.0` in proxy |
+
+---
+
 ## Build
 
 Requires Android SDK 34, build-tools 34, JDK 17:
